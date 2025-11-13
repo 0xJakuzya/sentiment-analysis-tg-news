@@ -1,0 +1,7 @@
+.env
+sessions/
+*.session
+*.session-journal
+.env.local
+.dockerignore
+__pycache__

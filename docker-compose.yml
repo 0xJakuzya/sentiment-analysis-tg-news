@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: telegram_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: telegram_sentiment
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - telegram_network
+
+  scraper:
+    build: .
+    container_name: telegram_scraper
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DB=telegram_sentiment
+      - MONGODB_COLLECTION=messages
+    volumes:
+      - ./data:/app/data
+      - telegram_sessions:/app/sessions
+    networks:
+      - telegram_network
+    stdin_open: true
+    tty: true
+
+volumes:
+  mongodb_data:
+  telegram_sessions:
+    driver: local
+
+networks:
+  telegram_network:
+    driver: bridge
+
