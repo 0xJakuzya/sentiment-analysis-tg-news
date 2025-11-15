@@ -90,6 +90,9 @@ class TelegramScraper:
                     "views": message.views,
                     "channel_id": getattr(channel, "id", None),
                     "channel_username": getattr(channel, "username", None),
+                    "is_processed": False, 
+                    "sentiment": None,
+                    "confidence": None
                 }
             )
 

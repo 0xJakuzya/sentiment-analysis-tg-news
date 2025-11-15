@@ -45,6 +45,11 @@ class MongoDBClient:
             )
             self._collection.create_index([("date", -1)], name="date_desc")
             self._collection.create_index([("channel_id", 1)], name="channel_id")
+            self._collection.create_index(
+            [("is_processed", 1)], 
+            name="is_processed"
+            )
+            self._collection.create_index([("sentiment", 1)], name="sentiment")
             print("Все индексы успешно созданы")
             
         except Exception as e:
@@ -83,6 +88,9 @@ class MongoDBClient:
         for message in messages:
             doc = dict(message)
             doc.setdefault("saved_at", datetime.utcnow())
+            doc.setdefault("is_processed", False)
+            doc.setdefault("sentiment", None)
+            doc.setdefault("confidence", None)
             normalized.append(doc)
 
         self._save_to_raw_files(normalized)
