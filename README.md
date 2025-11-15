@@ -4,38 +4,28 @@
 
 ## Возможности
 
-- Парсинг сообщений из Telegram каналов 
-- Предобработка текста (очистка сообщений, нормализация, удаление URL и т.д.)
-- Классификация тональности (позитив/негатив/нейтрал) с использованием BERT моделей
-- Сохранение результатов в MongoDB и JSON
+- Скрапинг сообщений из Telegram каналов
+- Предобработка текста (очистка сырых данных, нормализация и т.д.) - скоро будет
+- Классификация тональности (позитив/негатив/нейтрал) с использованием BERT моделей - скоро будет
+- Сохранение результатов в MongoDB
 - Docker поддержка для легкого развертывания
 
 ## Структура проекта
 ```
-Sentiment-Analysis-Telegram-news/
+Sentiment-Analysis-Telegram-news
+├── config/
+|   ├── channel.json      # Список телеграмм-каналов 
+│   ├── mongo_config.json # Конфигурация MongoDB              
 ├── src/
-│   ├── scraping/          # Модуль скрапинга Telegram
-│   ├── preprocessing/     # Предобработка текста
-│   ├── embedding/         # Создание эмбеддингов
-│   ├── classification/    # Классификация тональности
-│   ├── pipeline/          # Пайплайн обработки
-│   └── db/                # Работа с MongoDB
-├── data/                  # Данные (raw, processed, labeled)
+│   ├── telegram_scraping # Модуль скрапинга Telegram
+│   ├── preprocessing     # Предобработка текста
+│   ├── embedding         # Создание эмбеддингов
+│   ├── classification    # Классификация тональности
+│   ├── pipeline          # Пайплайн обработки
+│   └── mongo             # Работа с MongoDB
 ├── sessions/              # Telegram сессии
-├── config.py              # Конфигурация
-├── main.py                # Главный скрипт
 ├── requirements.txt       # Зависимости
 ├── Dockerfile             # Docker образ
 └── docker-compose.yml     # Docker Compose конфигурация
 ```
-### Структура модулей
-
-- `src/scraping/` - Скрапинг через Telethon
-- `src/preprocessing/` - Очистка и нормализация текста
-- `src/embedding/` - Создание векторных представлений (BERT, TF-IDF)
-- `src/classification/` - Классификация тональности
-- `src/pipeline/` - Оркестрация всех компонентов
-- `src/db/` - Работа с MongoDB
-
-
 
