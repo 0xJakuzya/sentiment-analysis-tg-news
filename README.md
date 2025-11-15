@@ -14,12 +14,12 @@
 ```
 Sentiment-Analysis-Telegram-news/
 ├── src/
-│   ├── scraping/          # Модуль скрапинга Telegram
-│   ├── preprocessing/     # Предобработка текста
-│   ├── embedding/         # Создание эмбеддингов
-│   ├── classification/    # Классификация тональности
-│   ├── pipeline/          # Пайплайн обработки
-│   └── db/                # Работа с MongoDB
+│   ├── telegram_scraping # Модуль скрапинга Telegram
+│   ├── preprocessing     # Предобработка текста
+│   ├── embedding         # Создание эмбеддингов
+│   ├── classification    # Классификация тональности
+│   ├── pipeline          # Пайплайн обработки
+│   └── mongo             # Работа с MongoDB
 ├── data/                  # Данные (raw, processed, labeled)
 ├── sessions/              # Telegram сессии
 ├── config.py              # Конфигурация
@@ -28,12 +28,4 @@ Sentiment-Analysis-Telegram-news/
 ├── Dockerfile             # Docker образ
 └── docker-compose.yml     # Docker Compose конфигурация
 ```
-### Структура модулей
-
-- `src/scraping/` - Скрапинг через Telethon
-- `src/preprocessing/` - Очистка и нормализация текста
-- `src/embedding/` - Создание векторных представлений (BERT, TF-IDF)
-- `src/classification/` - Классификация тональности
-- `src/pipeline/` - Оркестрация всех компонентов
-- `src/db/` - Работа с MongoDB
 
