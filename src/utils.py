@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 class AppConfig:
+
     _instance = None
     _configs = {}
     

@@ -1,103 +1,118 @@
 import re
-import sys
-sys.path.append('scripts')
-from config import config
+from utils import config
 
-EMOJI_PATTERN = re.compile(
-    "(["
-    "\U0001F1E0-\U0001F1FF"
-    "\U0001F300-\U0001F5FF" 
-    "\U0001F600-\U0001F64F"
-    "\U0001F680-\U0001F6FF"
-    "\U0001F700-\U0001F77F"
-    "\U0001F780-\U0001F7FF"
-    "\U0001F800-\U0001F8FF"
-    "\U0001F900-\U0001F9FF"
-    "\U0001FA00-\U0001FA6F"
-    "\U0001FA70-\U0001FAFF"
-    "\U00002600-\U000027BF"
-    "])", flags=re.UNICODE
-)
+class TextProcessor: 
 
-URL_PATTERN = re.compile(r"((?:https?|ftp)://[^\s/$.?#].[^\s]*|www\.[^\s/$.?#].[^\s]*)", flags=re.IGNORECASE)
-DOMAIN_PATTERN = re.compile(r"\b[\w-]+\.(?:ru|me|com|org|net|io)[^\s]*", flags=re.IGNORECASE)
-TELEGRAM_PATTERN = re.compile(r"(?:t\.me/|telegram\.me/|tg://)[^\s]+", flags=re.IGNORECASE)
-USERS_PATTERN = re.compile(r"@\w+")
-HASHTAG_PATTERN = re.compile(r"#\w+")
-MULTIPLE_DOTS_PATTERN = re.compile(r"\.{3,}")
+    PATTERNS = {
+        'emoji': re.compile(r'[\U0001F1E0-\U0001F1FF\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\U0001F77F\U0001F780-\U0001F7FF\U0001F800-\U0001F8FF\U0001F900-\U0001F9FF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF\U00002600-\U000027BF]'),
+        'url': re.compile(r'https?://\S+|www\.\S+|t\.me/\S+|tg://\S+'),
+        'mention': re.compile(r'[@#]\w+'), 
+        'quotes': re.compile(r'[«»"`´]'),
+        'spaces': re.compile(r'\s+'),
+        'decorative': re.compile(r'[◆●★☆▪▫►◄⬤○◦‣⁃–—→←↑↓‖¦⌁⌂☀☁☂☃☄]'),
+        'multi_excl': re.compile(r'!{3,}'),
+        'multi_quest': re.compile(r'\?{3,}')
+    }
 
-def remove_emoji(text):
-    return EMOJI_PATTERN.sub("", text)
+    def __init__(self, cfg=None):
+        config_cfg = config.get("preprocessing", {}).get("text_processor", {})
+        self.cfg = cfg or config_cfg
+        self.skip_phrases = self.cfg.get('skip_substrings', [])
+        self.rm_phrases = sorted(self.cfg.get('rm_substrings', []), key=len, reverse=True)
+        self.bad_words = self.cfg.get('obscene_substrings', [])
 
-def remove_urls(text):
-    text = URL_PATTERN.sub("", text)
-    text = DOMAIN_PATTERN.sub("", text)
-    text = TELEGRAM_PATTERN.sub("", text)
-    return text
-
-def remove_hashtags(text):
-    return HASHTAG_PATTERN.sub("", text)
-
-def remove_users(text):
-    return USERS_PATTERN.sub("", text)
-
-def normalize_quotes(text):
-    text = re.sub(r'[«»"''`´]', '"', text)
-    if text.count('"') % 2 != 0:
-        text = text.replace('"', ' ')
-    return text
-
-def fix_paragraphs(text):
-    paragraphs = text.split("\n")
-    cleaned = []
-    for p in paragraphs:
-        p = " ".join(p.split()).strip()
-        if len(p) >= 5:
-            cleaned.append(p)
-    return "\n".join(cleaned)
-
-def normalize_spaces(text):
-    text = re.sub(r'\s+', ' ', text)
-    text = MULTIPLE_DOTS_PATTERN.sub('...', text)
-    return text.strip()
-
-class TextProcessor:
-
-    def __init__(self, processor_config=None):
-        processor_config = config.get("preprocessing", {}).get("text_processor", {})
+    def clean(self, text):
+        if not text or self._skip(text):
+            return ""
         
-        self.pipeline = (
-            remove_emoji,
-            remove_urls,
-            remove_hashtags, 
-            remove_users,
-            normalize_quotes,
-            fix_paragraphs,
-            normalize_spaces
-        )
-        self.skip_substrings = processor_config.get("skip_substrings", [])
-        self.rm_substrings = processor_config.get("rm_substrings", [])
-        self.rm_substrings.sort(key=len, reverse=True)
+        text = self._preserve_numeric_ranges(text)
+        text = self._rm_phrases(text)
 
-    def __call__(self, text):
-        if not text:
-            return ""
-        if self._should_skip(text):
-            return ""
-        text = self._remove_bad_text(text)
-        for step in self.pipeline:
-            text = step(text)
+        cleaners = [
+            self._rm_emoji,
+            self._rm_links,
+            self._rm_decorative,
+            self._norm_quotes,
+            self._norm_punct,
+            self._clean_paras,
+            self._norm_spaces,
+            self._keep_symbols
+        ]
+        
+        for cleaner in cleaners:
+            text = cleaner(text)
             if not text:
                 return ""
-        if len(text.strip()) < 10:
-            return ""
-        return text.strip()
+        
+        return text if len(text.strip()) >= 5 else ""
+        
+    def _preserve_numeric_ranges(self, text):
 
-    def _should_skip(self, text):
-        text_lower = text.lower()
-        return any(ss.lower() in text_lower for ss in self.skip_substrings)
+        def fix_decimal(match):
+            n1 = match.group(1).replace(',', '.')  
+            n2 = match.group(2).replace(',', '.')
+            return f"{n1}-{n2}"
 
-    def _remove_bad_text(self, text):
-        for ss in self.rm_substrings:
-            text = text.replace(ss, " ")
+        def fix_simple(match):
+            return f"{match.group(1)}-{match.group(2)}"
+
+        text = re.sub(r'(\d+[,\.]\d+)\s*[–\-]\s*(\d+[,\.]?\d*)', fix_decimal, text)
+        text = re.sub(r'(\d+)\s*[–\-]\s*(\d+)', fix_simple, text)
         return text
+
+    def _skip(self, text):
+        lower_text = text.lower()
+        return any(phrase.lower() in lower_text for phrase in self.skip_phrases)
+    
+    def _rm_phrases(self, text):
+        for phrase in self.rm_phrases:
+            text = text.replace(phrase, " ")
+        return text
+    
+    def _rm_decorative(self, text):
+        text = self.PATTERNS['decorative'].sub('', text)
+        text = re.sub(r'[◻️▪️▫️▶️◀️➡️⬅️🔹🔺🐚🗞🍷👊🔥🇷🇺]', '', text)
+        return text
+    
+    def _norm_punct(self, text):
+        text = re.sub(r'\.{3,}|…', '...', text)
+        text = self.PATTERNS['multi_excl'].sub('!', text)
+        text = self.PATTERNS['multi_quest'].sub('?', text)
+        text = re.sub(r'(\d+)[,\.]?(\d*)\s*[–\-]\s*(\d+)[,\.]?(\d*)', 
+                    lambda m: f"{m[1]},{m[2]}-{m[3]},{m[4]}" if m[2] or m[4] else f"{m[1]}-{m[3]}", text)
+        text = re.sub(r'(\d+)\s*(процентов|проц)', r'\1%', text, flags=re.IGNORECASE)
+        return text
+        
+    def _keep_symbols(self, text):
+        text = re.sub(r'(\d+)%', r'\1%', text)
+        text = re.sub(r'\$(\d+)', r'$\1', text) 
+        text = re.sub(r'€(\d+)', r'€\1', text)  
+        text = re.sub(r'№\s*(\d+)', r'№\1', text)
+        return text
+
+    def _rm_emoji(self, text):
+        return self.PATTERNS['emoji'].sub('', text)
+    
+    def _rm_links(self, text):
+        text = self.PATTERNS['url'].sub('', text)
+        text = self.PATTERNS['mention'].sub('', text)
+        return text
+    
+    def _norm_quotes(self, text):
+        text = self.PATTERNS['quotes'].sub('"', text)
+        text = re.sub(r'^"+|"+$', '', text)
+        if text.count('"') % 2 != 0:
+            text = text.replace('"', ' ')
+        return text.strip()
+    
+    def _clean_paras(self, text):
+        paras = [
+            ' '.join(p.split()).strip() 
+            for p in text.split('\n') 
+            if len(' '.join(p.split()).strip()) >= 5
+        ]
+        return '\n'.join(paras)
+    
+    def _norm_spaces(self, text):
+        text = self.PATTERNS['spaces'].sub(' ', text)
+        return text.strip()

@@ -61,5 +61,5 @@ class TelegramScraper:
                 })
         return messages
 
-    def save2mongodb(self, messages):
+    def save_to_mongodb(self, messages):
         return self.db_client.save_messages(messages) if messages else 0
