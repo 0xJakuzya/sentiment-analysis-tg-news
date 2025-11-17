@@ -4,12 +4,28 @@ from utils import config
 class TextProcessor: 
 
     PATTERNS = {
-        'emoji': re.compile(r'[\U0001F1E0-\U0001F1FF\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\U0001F77F\U0001F780-\U0001F7FF\U0001F800-\U0001F8FF\U0001F900-\U0001F9FF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF\U00002600-\U000027BF]'),
+        'emoji': re.compile(
+            "(["
+            "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F600-\U0001F64F"  # emoticons
+            "\U0001F680-\U0001F6FF"  # transport & map symbols
+            "\U0001F700-\U0001F77F"  # alchemical symbols
+            "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+            "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+            "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+            "\U0001FA00-\U0001FA6F"  # Chess Symbols
+            "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+            "\U00002600-\U00002B55"
+            "\U0000FE0E-\U0000FE0F"
+            "])",
+            flags=re.UNICODE,
+        )
         'url': re.compile(r'https?://\S+|www\.\S+|t\.me/\S+|tg://\S+'),
         'mention': re.compile(r'[@#]\w+'), 
         'quotes': re.compile(r'[«»"`´]'),
+        'source': re.compile(r',?\s*(пишет|сообщает|по данным|источник|сообщают|сообщили)\s+[^.!?]+(?=[.!?]|$)', re.IGNORECASE),
         'spaces': re.compile(r'\s+'),
-        'decorative': re.compile(r'[◆●★☆▪▫►◄⬤○◦‣⁃–—→←↑↓‖¦⌁⌂☀☁☂☃☄]'),
         'multi_excl': re.compile(r'!{3,}'),
         'multi_quest': re.compile(r'\?{3,}')
     }
@@ -31,9 +47,9 @@ class TextProcessor:
         cleaners = [
             self._rm_emoji,
             self._rm_links,
-            self._rm_decorative,
             self._norm_quotes,
             self._norm_punct,
+            self.remove_soucres,
             self._clean_paras,
             self._norm_spaces,
             self._keep_symbols
@@ -69,17 +85,10 @@ class TextProcessor:
             text = text.replace(phrase, " ")
         return text
     
-    def _rm_decorative(self, text):
-        text = self.PATTERNS['decorative'].sub('', text)
-        text = re.sub(r'[◻️▪️▫️▶️◀️➡️⬅️🔹🔺🐚🗞🍷👊🔥🇷🇺]', '', text)
-        return text
-    
     def _norm_punct(self, text):
         text = re.sub(r'\.{3,}|…', '...', text)
         text = self.PATTERNS['multi_excl'].sub('!', text)
         text = self.PATTERNS['multi_quest'].sub('?', text)
-        text = re.sub(r'(\d+)[,\.]?(\d*)\s*[–\-]\s*(\d+)[,\.]?(\d*)', 
-                    lambda m: f"{m[1]},{m[2]}-{m[3]},{m[4]}" if m[2] or m[4] else f"{m[1]}-{m[3]}", text)
         text = re.sub(r'(\d+)\s*(процентов|проц)', r'\1%', text, flags=re.IGNORECASE)
         return text
         
@@ -90,13 +99,23 @@ class TextProcessor:
         text = re.sub(r'№\s*(\d+)', r'№\1', text)
         return text
 
-    def _rm_emoji(self, text):
+    def _rm_emoji(self, text): 
         return self.PATTERNS['emoji'].sub('', text)
     
     def _rm_links(self, text):
         text = self.PATTERNS['url'].sub('', text)
         text = self.PATTERNS['mention'].sub('', text)
         return text
+
+    def remove_soucres(self, text):
+        text = self.PATTERNS['source'].sub('', text)
+        text = re.sub(r'\s*,\s*\.', '.', text)  
+        text = re.sub(r'\s*,\s*,', ',', text)   
+        text = re.sub(r'\s*\.\s*\.', '.', text)
+        text = re.sub(r'\s+', ' ', text)        
+        text = re.sub(r'\s*,\s*$', '', text)
+        return text
+
     
     def _norm_quotes(self, text):
         text = self.PATTERNS['quotes'].sub('"', text)
