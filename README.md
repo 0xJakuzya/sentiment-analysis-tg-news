@@ -1,36 +1,33 @@
-# Sentiment Analysis для Telegram новостей
+# sentiment analysis for telegram news
 
-Проект для анализа тональности новостей из Telegram каналов с использованием машинного обучения.
+a project for sentiment analysis of news from Telegram channels using machine learning
 
-## Будущие Возможности
+## features
 
-- Скрапинг сообщений из Telegram каналов
-- Предобработка текста (очистка HTML, нормализация, удаление URL и т.д.)
-- Классификация тональности (позитив/негатив/нейтрал) с использованием BERT моделей
-- Сохранение результатов в MongoDB и JSON
-- Docker поддержка для легкого развертывания
+- scraping messages from Telegram channels  
+- text preprocessing (raw data cleaning, normalization, etc.)  
+- sentiment classification (positive / negative / neutral) using BERT-based models  
+- storing results in MongoDB  
+- docker support for easy deployment  
 
-## Структура проекта
+## project Structure
 ```
-Sentiment-Analysis-Telegram-news/
+sentiment-analysis-telegram-news
 ├── config/
-|   ├── channel.json      # Список телеграмм-каналов 
-│   ├── mongo_config.json # Конфигурация MongoDB
-|   ├── preprocessing.json # Конфигурация Предообработки 
+|   ├── channel.json      # list telegram-channels 
+│   ├── mongo_config.json # configuration MongoDB              
 ├── src/
-│   ├── telegram_scraping # Модуль скрапинга Telegram
-│   ├── preprocessing     # Предобработка текста
-│   ├── embedding         # Создание эмбеддингов
-│   ├── classification    # Классификация тональности
-│   ├── pipeline          # Пайплайн обработки
-│   └── mongo             # Работа с MongoDB
-├── scripts/
-│   ├── config.py          # Скрипт для вызова конфигураций
-├── data/                  # Данные (raw, processed, labeled)
-├── sessions/              # Telegram сессии
-├── main.py                # Главный скрипт
-├── requirements.txt       # Зависимости
-├── Dockerfile             # Docker образ
-└── docker-compose.yml     # Docker Compose конфигурация
+│   ├── telegram_scraping # telegram scrap modules
+│   ├── preprocessing     # text processing
+│   ├── embedding         # embedding generation
+│   ├── classification    # sentiment classification
+│   ├── pipeline          # processing pipeline
+│   └── mongo             # mongodb integration
+├── sessions/              # telegram sessions
+├── requirements.txt       
+├── Dockerfile             
+└── docker-compose.yml     
 ```
+
+
 
