@@ -18,6 +18,8 @@ services:
     volumes:
       - ./config:/app/config
       - telegram_sessions:/app/sessions
+      - ./data/raw:/app/data/raw
+      - ./data/processed:/app/data/processed
 volumes:
   mongodb_data:
   telegram_sessions:
