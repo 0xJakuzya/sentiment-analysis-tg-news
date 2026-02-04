@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+  scraper:
+    build: .
+    depends_on:
+      - mongodb
+    environment:
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - SESSION_NAME=${SESSION_NAME}
+    volumes:
+      - ./config:/app/config
+      - telegram_sessions:/app/sessions
+volumes:
+  mongodb_data:
+  telegram_sessions:
