@@ -11,6 +11,7 @@ from mongo import MongoDBClient
 load_dotenv()
 
 class TelegramScraper:
+    
     def __init__(self, session_name: str, mongo_client):
         self.api_id = os.getenv("TELEGRAM_API_ID")
         self.api_hash = os.getenv("TELEGRAM_API_HASH")
@@ -45,7 +46,6 @@ class TelegramScraper:
     async def parse_channel(self, channel_name, limit=100):
         channel = await self.client.get_entity(channel_name)
         messages = []
-        
         async for message in self.client.iter_messages(channel, limit=limit):
             if message.message:
                 messages.append({
@@ -59,8 +59,7 @@ class TelegramScraper:
                     "sentiment": None,
                     "confidence": None
                 })
-        
         return messages
 
-    def save2mongodb(self, messages):
+    def save_to_mongodb(self, messages):
         return self.db_client.save_messages(messages) if messages else 0
