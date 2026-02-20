@@ -2,16 +2,16 @@
 
 A project for sentiment analysis of news from Telegram channels using machine learning.
 
-## Features
+## features
 
-- Scraping messages from Telegram channels (Telethon)
-- Text preprocessing (raw data cleaning, normalization, emoji/URL removal, etc.)
-- Sentiment classification (positive / negative / neutral) using BERT-based models
-- Storing raw and processed data in MongoDB and local JSON
-- Docker support for easy deployment
+- scraping messages from Telegram channels (telethon)
+- text preprocessing (raw data cleaning, normalization, emoji/URL removal, etc.)
+- sentiment classification (positive / negative / neutral) using BERT-based models
+- storing raw and processed data in MongoDB and local JSON
+- docker support for easy deployment
 - JSON configuration (channels, pipeline, preprocessing rules)
 
-## Installation
+## installation
 
 ```bash
 git clone <repo>
@@ -19,11 +19,11 @@ cd Sentiment-Analysis-Telegram-news
 pip install -r requirements.txt
 ```
 
-## Setup
+## setup
 
-### 1. Environment variables (.env)
+### 1. environment variables (.env)
 
-Create a `.env` file in the project root:
+create a `.env` file in the project root:
 
 ```env
 # Telegram API (get credentials at my.telegram.org)
@@ -40,7 +40,7 @@ MONGO_DATABASE_NAME=telegram_sentiment
 MONGO_COLLECTION_NAME=messages
 ```
 
-### 2. Configuration files (config/)
+### 2. configuration files (config/)
 
 | File | Description |
 |------|-------------|
@@ -48,49 +48,49 @@ MONGO_COLLECTION_NAME=messages
 | `pipeline.json` | `messages_per_channel` — message limit per channel |
 | `preprocessing.json` | Text cleaning rules (what to remove, skip, filter) |
 
-## Running
+## running
 
-**Start MongoDB before running:**
+**start MongoDB before running:**
 
 ```bash
 docker-compose up -d mongodb
 ```
 
-### Locally
+### locally
 
 ```bash
 python main.py
 ```
 
-On first run, enter your phone number and Telegram verification code for authorization.
+on first run, enter your phone number and Telegram verification code for authorization.
 
-### Docker Compose
+### docker compose
 
 ```bash
 docker-compose up --build
 ```
 
-## Project structure
+## project structure
 
 ```
 sentiment-analysis-telegram-news
 ├── config/
-│   ├── channels.json      # Channels to scrape
-│   ├── pipeline.json      # Pipeline limits and settings
-│   └── preprocessing.json # Text preprocessing rules
+│   ├── channels.json      # channels to scrape
+│   ├── pipeline.json      # pipeline limits and settings
+│   └── preprocessing.json # text preprocessing rules
 ├── src/
-│   ├── pipeline.py        # Pipeline: scrape → clean → classify → save
-│   ├── telegram_scraper.py # Scraping via Telethon
-│   ├── preprocessing.py   # Text cleaning
-│   ├── mongo.py           # MongoDB integration
-│   ├── utils.py           # Config loading
-│   ├── embedding.py       # (stub) Embeddings
-│   └── classification.py # (stub) Sentiment classification
+│   ├── pipeline.py        # pipeline: scrape → clean → classify → save
+│   ├── telegram_scraper.py # scraping telethon
+│   ├── preprocessing.py   # text cleaning
+│   ├── mongo.py           # mongoDB integration
+│   ├── utils.py           # config loading
+│   ├── embedding.py       # (stub) embeddings
+│   └── classification.py # (stub) sentiment classification
 ├── data/
-│   ├── raw/               # Raw messages (JSON)
-│   └── processed/         # Processed messages (JSON)
-├── sessions/              # Telethon sessions (created automatically)
-├── main.py                # Entry point
+│   ├── raw/               # raw data (JSON)
+│   └── processed/         # processed data (JSON)
+├── sessions/              # telethon sessions (created automatically)
+├── main.py                # entry point
 ├── requirements.txt
 ├── Dockerfile
 └── docker-compose.yml
