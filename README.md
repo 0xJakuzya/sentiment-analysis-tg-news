@@ -1,6 +1,6 @@
 # sentiment analysis for telegram news
 
-A project for sentiment analysis of news from Telegram channels using machine learning.
+Sentiment analysis tool for Telegram news: scraping with Telethon, text preprocessing, ML classification (BERT), storage in MongoDB and JSON
 
 ## features
 
