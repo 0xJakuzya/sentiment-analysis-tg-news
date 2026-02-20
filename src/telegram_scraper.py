@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import sys
-sys.path.append('src')
 
 from telethon import TelegramClient
 from telethon.errors import RPCError, SessionPasswordNeededError
@@ -12,21 +10,19 @@ load_dotenv()
 
 class TelegramScraper:
     
-    def __init__(self, session_name: str, mongo_client):
+    def __init__(self, session_name: str, mongo: MongoDBClient):
         self.api_id = os.getenv("TELEGRAM_API_ID")
         self.api_hash = os.getenv("TELEGRAM_API_HASH")
-        
+        self.client = None
+        self.mongo = mongo
+
         session_path = Path(os.getenv("SESSION_DIR")) / os.getenv("SESSION_NAME")
         session_path.parent.mkdir(parents=True, exist_ok=True)
         self.session_name = str(session_path)
-        
-        self.client = None
-        self.db_client = mongo_client
 
     async def connect(self):
         self.client = TelegramClient(self.session_name, self.api_id, self.api_hash)
         await self.client.start()
-        
         if not await self.client.is_user_authorized():
             phone = input("Введите номер телефона: ")
             await self.client.send_code_request(phone)
@@ -36,10 +32,10 @@ class TelegramScraper:
             except SessionPasswordNeededError:
                 password = input("Введите пароль 2FA: ")
                 await self.client.sign_in(password=password)
-        
         return True
 
     async def disconnect(self):
+        """disconnect from telegram"""
         if self.client:
             await self.client.disconnect()
 
@@ -62,4 +58,4 @@ class TelegramScraper:
         return messages
 
     def save_to_mongodb(self, messages):
-        return self.db_client.save_messages(messages) if messages else 0
+        return self.mongo.save_raw_messages(messages) if messages else 0

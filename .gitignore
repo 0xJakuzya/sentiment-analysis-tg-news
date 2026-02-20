@@ -1,4 +1,5 @@
 .env
+.conda
 sessions/
 *.session
 *.session-journal
