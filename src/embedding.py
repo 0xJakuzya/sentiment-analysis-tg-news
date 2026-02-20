@@ -3,7 +3,7 @@ class FeatureExtractor:
     def __init__(self, method):
         pass
 
-    def _load_bert_model(self, model_name):
+    def load_bert(self, model_name):
         pass
     
     def fit_transform():
@@ -12,8 +12,8 @@ class FeatureExtractor:
     def transform():
         pass
 
-    def _bert_embed():
+    def embeddings():
         pass
 
-    def _tfidf_embed():
+    def tfidf_embeddings():
         pass

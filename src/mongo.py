@@ -2,44 +2,52 @@ import json
 import os
 from datetime import datetime
 from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class MongoDBClient:
-    def __init__(self, config):
-        client_config = config["client"]
-        self.uri = f"mongodb://{client_config['host']}:{client_config['port']}"
-        self.db_name = config["database_name"]
-        self.collection_name = config["documents_collection_name"]
-        
+    
+    def __init__(self):
+
+        self.uri = os.getenv("MONGO_ADDRESS")
+        self.db_name = os.getenv("MONGO_DATABASE_NAME")
+        self.collection_name = os.getenv("MONGO_COLLECTION_NAME")
+
         os.makedirs("data/raw", exist_ok=True)
         os.makedirs("data/processed", exist_ok=True)
-        
-        self._client = MongoClient(self.uri)
-        self._collection = self._client[self.db_name][self.collection_name]
-        self._create_indexes()
 
-    def _create_indexes(self):
-        self._collection.create_index(
+        self.client = MongoClient(self.uri)
+        self.collection = self.client[self.db_name][self.collection_name]
+        self.create_indexes()
+
+    def create_indexes(self):
+        """create unique indexes for the collection"""
+        self.collection.create_index(
             [("id", 1), ("channel_id", 1)], 
             unique=True, 
             name="message_channel_unique"
         )
 
-    def _save_local(self, messages, suffix):
-        filename = f"data/{suffix}/{suffix}_{datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')}.json"
+    def save_local(self, messages, suffix):
+        now = datetime.utcnow()
+        timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"data/{suffix}/{suffix}_{timestamp}.json"
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(messages, f, ensure_ascii=False, indent=2, default=str)
 
-    def save_messages(self, messages):
-        self._save_local(messages, "raw")
-        saved_count = 0
+    def save_raw_messages(self, messages):
+        self.save_local(messages, "raw")
+        now = datetime.utcnow()
+        count = 0
         for msg in messages:
-            result = self._collection.update_one(
+            result = self.collection.update_one(
                 {"id": msg["id"], "channel_id": msg["channel_id"]},
                 {
                     "$setOnInsert": {
                         "id": msg["id"],
                         "channel_id": msg["channel_id"],
-                        "created_at": datetime.utcnow(),
+                        "created_at": now,
                     },
                     "$set": {
                         "message": msg.get("message"),
@@ -49,31 +57,33 @@ class MongoDBClient:
                         "is_processed": msg.get("is_processed", False),
                         "sentiment": msg.get("sentiment"),
                         "confidence": msg.get("confidence"),
-                        "updated_at": datetime.utcnow()
+                        "updated_at": now
                     }
                 },
                 upsert=True
             )
-            if result.upserted_id:
-                saved_count += 1
-        return saved_count
+            count += 1 if result.upserted_id else 0
+        return count
 
     def save_processed_messages(self, messages):
-        self._save_local(messages, "processed")
+        self.save_local(messages, "processed")
+        now = datetime.utcnow()
         for msg in messages:
-            self._collection.update_one(
+            self.collection.update_one(
                 {"id": msg["id"], "channel_id": msg["channel_id"]},
                 {
                     "$set": {
-                        "cleaned_message": msg.get("cleaned_message"),
+                        "cleaned_text": msg.get("cleaned_text"),
                         "is_processed": True,
-                        "processed_at": datetime.utcnow()
+                        "processed_at": now
                     }
-                }
+                },
+                upsert=True
             )
 
-    def get_all_messages(self):
-        return list(self._collection.find({}))
+    def get_messages(self):
+        return list(self.collection.find({}))
 
     def close(self):
-        self._client.close()
+        """close the mongoDB client"""
+        self.client.close()
