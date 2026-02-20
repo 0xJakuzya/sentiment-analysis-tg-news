@@ -1,15 +1,17 @@
-# Sentiment Analysis для Telegram новостей
+# sentiment analysis for telegram news
 
-Проект для сбора и анализа тональности новостей из Telegram-каналов
-## Возможности
+A project for sentiment analysis of news from Telegram channels using machine learning.
 
-- Скрапинг сообщений из Telegram-каналов (Telethon)
-- Предобработка текста: удаление эмодзи, URL, служебных фраз, нормализация
-- Сохранение сырых и обработанных данных в MongoDB и локальные JSON
-- Docker для запуска пайплайна с MongoDB
-- Конфигурация через JSON (каналы, пайплайн, правила очистки)
+## Features
 
-## Установка
+- Scraping messages from Telegram channels (Telethon)
+- Text preprocessing (raw data cleaning, normalization, emoji/URL removal, etc.)
+- Sentiment classification (positive / negative / neutral) using BERT-based models
+- Storing raw and processed data in MongoDB and local JSON
+- Docker support for easy deployment
+- JSON configuration (channels, pipeline, preprocessing rules)
+
+## Installation
 
 ```bash
 git clone <repo>
@@ -17,18 +19,18 @@ cd Sentiment-Analysis-Telegram-news
 pip install -r requirements.txt
 ```
 
-## Настройка
+## Setup
 
-### 1. Переменные окружения (.env)
+### 1. Environment variables (.env)
 
-Создайте `.env` в корне проекта:
+Create a `.env` file in the project root:
 
 ```env
-# Telegram API (получить на my.telegram.org)
+# Telegram API (get credentials at my.telegram.org)
 TELEGRAM_API_ID=your_api_id
 TELEGRAM_API_HASH=your_api_hash
 
-# Сессия
+# Session
 SESSION_NAME=session
 SESSION_DIR=sessions
 
@@ -38,29 +40,29 @@ MONGO_DATABASE_NAME=telegram_sentiment
 MONGO_COLLECTION_NAME=messages
 ```
 
-### 2. Конфигурационные файлы (config/)
+### 2. Configuration files (config/)
 
-| Файл | Описание |
-|------|----------|
-| `channels.json` | Массив usernames каналов, например `["ruble30", "channel2"]` |
-| `pipeline.json` | `messages_per_channel` — лимит сообщений на канал |
-| `preprocessing.json` | Правила очистки текста (что удалять, пропускать, фильтровать) |
+| File | Description |
+|------|-------------|
+| `channels.json` | Array of channel usernames, e.g. `["ruble30", "channel2"]` |
+| `pipeline.json` | `messages_per_channel` — message limit per channel |
+| `preprocessing.json` | Text cleaning rules (what to remove, skip, filter) |
 
-## Запуск
+## Running
 
-**Перед запуском обязательно запустите MongoDB:**
+**Start MongoDB before running:**
 
 ```bash
 docker-compose up -d mongodb
 ```
 
-### Локально
+### Locally
 
 ```bash
 python main.py
 ```
 
-При первом запуске введите номер телефона и код из Telegram для авторизации.
+On first run, enter your phone number and Telegram verification code for authorization.
 
 ### Docker Compose
 
@@ -68,27 +70,27 @@ python main.py
 docker-compose up --build
 ```
 
-## Структура проекта
+## Project structure
 
 ```
-Sentiment-Analysis-Telegram-news/
+sentiment-analysis-telegram-news
 ├── config/
-│   ├── channels.json      # Каналы для парсинга
-│   ├── pipeline.json      # Лимиты и настройки пайплайна
-│   └── preprocessing.json # Правила предобработки текста
+│   ├── channels.json      # Channels to scrape
+│   ├── pipeline.json      # Pipeline limits and settings
+│   └── preprocessing.json # Text preprocessing rules
 ├── src/
-│   ├── pipeline.py        # Пайплайн: scrape → clean → classify → save
-│   ├── telegram_scraper.py # Скрапинг через Telethon
-│   ├── preprocessing.py   # Очистка текста
-│   ├── mongo.py           # Работа с MongoDB
-│   ├── utils.py           # Загрузка конфигов
-│   ├── embedding.py       # (заглушка) Эмбеддинги
-│   └── classification.py  # (заглушка) Классификация тональности
+│   ├── pipeline.py        # Pipeline: scrape → clean → classify → save
+│   ├── telegram_scraper.py # Scraping via Telethon
+│   ├── preprocessing.py   # Text cleaning
+│   ├── mongo.py           # MongoDB integration
+│   ├── utils.py           # Config loading
+│   ├── embedding.py       # (stub) Embeddings
+│   └── classification.py # (stub) Sentiment classification
 ├── data/
-│   ├── raw/               # Сырые сообщения (JSON)
-│   └── processed/         # Обработанные сообщения (JSON)
-├── sessions/              # Сессии Telethon (создаётся автоматически)
-├── main.py                # Точка входа
+│   ├── raw/               # Raw messages (JSON)
+│   └── processed/         # Processed messages (JSON)
+├── sessions/              # Telethon sessions (created automatically)
+├── main.py                # Entry point
 ├── requirements.txt
 ├── Dockerfile
 └── docker-compose.yml
