@@ -1,8 +1,0 @@
-{
-    "client": {
-        "host": "localhost",
-        "port": 27017
-    },
-    "database_name": "telegram_sentiment",
-    "documents_collection_name": "messages"
-}
