@@ -1,5 +1,7 @@
 .env
 .conda
+.idea/
+.venv/
 sessions/
 *.session
 *.session-journal
