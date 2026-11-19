@@ -1,15 +1,19 @@
-import asyncio
 import os
 
-from utils import config
+import joblib
+
+from utils import PROJECT_ROOT, config
 from telegram_scraper import TelegramScraper
-from mongo import MongoDBClient
+from mongodb import MongoDBClient
 from preprocessing import TextProcessor
 
 
 class Pipeline:
 
     def __init__(self, session_name=None):
+        model_dir = PROJECT_ROOT / "models"
+        self.tfidf = joblib.load(model_dir / "tfidf.pkl")
+        self.model = joblib.load(model_dir / "logreg.pkl")
         self.session_name = session_name or os.getenv("SESSION_NAME")
         self.mongo = MongoDBClient()
         self.scraper = TelegramScraper(self.session_name, self.mongo)
@@ -34,9 +38,16 @@ class Pipeline:
         return out
 
     def classify(self, messages):
-        for msg in messages:
-            msg["sentiment"] = None
-            msg["confidence"] = None
+        batch = [msg for msg in messages if (msg.get("message") or "").strip()]
+        if not batch:
+            return messages
+
+        features = self.tfidf.transform([msg["message"] for msg in batch])
+        probabilities = self.model.predict_proba(features)
+        for msg, scores in zip(batch, probabilities):
+            index = scores.argmax()
+            msg["sentiment"] = int(self.model.classes_[index])
+            msg["confidence"] = float(scores[index])
         return messages
 
     async def run(self):
@@ -44,8 +55,8 @@ class Pipeline:
         limit = pipeline_config.get("messages_per_channel", 50)
         channels = config.get("channels") or []
 
-        await self.scraper.connect()
         try:
+            await self.scraper.connect()
             raw = await self.parse_raw_messages(channels, limit)
         finally:
             await self.scraper.disconnect()

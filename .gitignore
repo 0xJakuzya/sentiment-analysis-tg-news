@@ -9,3 +9,4 @@ sessions/
 .dockerignore
 __pycache__
 data/
+/models
