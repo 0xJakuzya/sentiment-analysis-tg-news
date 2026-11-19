@@ -1,15 +1,11 @@
 import json
 from pathlib import Path
 
-# путь к корню проекта (родитель каталога src)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-
 class AppConfig:
-
     instance = None
     configs = {}
-
     def __new__(cls):
         if cls.instance is None:
             cls.instance = super().__new__(cls)
@@ -26,6 +22,5 @@ class AppConfig:
     @classmethod
     def get(cls, key, default=None):
         return cls.configs.get(key, default)
-
 
 config = AppConfig()

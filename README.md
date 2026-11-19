@@ -1,22 +1,22 @@
 # sentiment analysis for telegram news
 
-Sentiment analysis tool for Telegram news: scraping with Telethon, text preprocessing, ML classification (BERT), storage in MongoDB and JSON
+sentiment analysis for russian-language telegram news using telethon, TF-IDF, and logistic regression. posts and predictions are saved to mongoDB and local json files.
 
 ## features
 
-- scraping messages from Telegram channels (telethon)
-- text preprocessing (raw data cleaning, normalization, emoji/URL removal, etc.)
-- sentiment classification (positive / negative / neutral) using BERT-based models
-- storing raw and processed data in MongoDB and local JSON
-- docker support for easy deployment
-- JSON configuration (channels, pipeline, preprocessing rules)
+- telegram channel scraping with Telethon
+- text cleaning and normalization
+- binary sentiment classification with TF-IDF and logistic regression
+- raw and processed data in MongoDB and local json
+- docker Compose support
+- json configuration (channels, pipeline, preprocessing rules)
 
 ## installation
 
 ```bash
-git clone <repo>
-cd Sentiment-Analysis-Telegram-news
-pip install -r requirements.txt
+git clone https://github.com/0xJakuzya/sentiment-analysis-tg-news.git
+cd sentiment-analysis-tg-news
+python -m pip install -r requirements.txt
 ```
 
 ## setup
@@ -40,56 +40,45 @@ MONGO_DATABASE_NAME=telegram_sentiment
 MONGO_COLLECTION_NAME=messages
 ```
 
-### 2. configuration files (config/)
-
-| File | Description |
-|------|-------------|
-| `channels.json` | Array of channel usernames, e.g. `["ruble30", "channel2"]` |
-| `pipeline.json` | `messages_per_channel` — message limit per channel |
-| `preprocessing.json` | Text cleaning rules (what to remove, skip, filter) |
-
 ## running
-
-**start MongoDB before running:**
-
-```bash
-docker-compose up -d mongodb
-```
 
 ### locally
 
 ```bash
+docker compose up -d mongodb
+docker compose run --rm --build scraper
 python main.py
 ```
 
-on first run, enter your phone number and Telegram verification code for authorization.
+## model and results
 
-### docker compose
+the classifier uses the original message as input. each processed record includes cleaned_text, the predicted sentiment (0 or 1), and confidence, the model's estimated probability for the predicted class.
 
-```bash
-docker-compose up --build
-```
+| Evaluation set | Records | Accuracy | Macro-F1 |
+|---|---:|---:|---:|
+| `dev.csv` | 424 | 0.9269 | 0.9206 |
 
 ## project structure
 
 ```
-sentiment-analysis-telegram-news
+sentiment-analysis-tg-news
 ├── config/
 │   ├── channels.json      # channels to scrape
-│   ├── pipeline.json      # pipeline limits and settings
+│   ├── pipeline.json      # message limit
 │   └── preprocessing.json # text preprocessing rules
 ├── src/
-│   ├── pipeline.py        # pipeline: scrape → clean → classify → save
-│   ├── telegram_scraper.py # scraping telethon
+│   ├── inference.py       # scrape, clean, classify, and save
+│   ├── telegram_scraper.py # Telegram client
 │   ├── preprocessing.py   # text cleaning
-│   ├── mongo.py           # mongoDB integration
-│   ├── utils.py           # config loading
-│   ├── embedding.py       # (stub) embeddings
-│   └── classification.py # (stub) sentiment classification
+│   ├── mongodb.py         # MongoDB and JSON storage
+│   └── utils.py           # configuration loading
+├── models/
+│   ├── tfidf.pkl          # fitted vectorizer
+│   └── logreg.pkl         # trained classifier
 ├── data/
 │   ├── raw/               # raw data (JSON)
 │   └── processed/         # processed data (JSON)
-├── sessions/              # telethon sessions (created automatically)
+├── sessions/              # saved Telethon sessions
 ├── main.py                # entry point
 ├── requirements.txt
 ├── Dockerfile

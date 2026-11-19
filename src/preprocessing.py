@@ -2,7 +2,6 @@ import re
 from utils import config
 
 class TextProcessor: 
-
     PATTERNS = {
         'emoji': re.compile(
             "(["
