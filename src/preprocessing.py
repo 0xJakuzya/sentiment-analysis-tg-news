@@ -1,5 +1,5 @@
 import re
-from utils import config
+from .utils import config
 
 class TextProcessor: 
     PATTERNS = {

@@ -1,10 +1,8 @@
 import asyncio
-import sys
-from pathlib import Path
-from inference import Pipeline
+from src.inference import Inference
 
 def main():
-    pipeline = Pipeline()
+    pipeline = Inference()
     try:
         asyncio.run(pipeline.run())
     finally:

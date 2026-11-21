@@ -1,19 +1,22 @@
-import asyncio
 import os
 import joblib
-from utils import config
-from telegram_scraper import TelegramScraper
-from mongodb import MongoDBClient
-from preprocessing import TextProcessor
+from .utils import PROJECT_ROOT, config
+from .telegram_scraper import TelegramScraper
+from .mongodb import MongoDBClient
+from .preprocessing import TextProcessor
 
 class Inference:
     def __init__(self, session_name=None):
         self.session_name = session_name or os.getenv("SESSION_NAME")
+        model_dir = PROJECT_ROOT / "models"
+        missing = [name for name in ("tfidf.pkl", "logreg.pkl") if not (model_dir / name).is_file()]
+        if missing:
+            print(f'missing models in {model_dir}')
+        self.tfidf = joblib.load(model_dir / "tfidf.pkl")
+        self.model = joblib.load(model_dir / "logreg.pkl")
         self.mongo = MongoDBClient()
         self.scraper = TelegramScraper(self.session_name, self.mongo)
         self.cleaner = TextProcessor()
-        self.tfidf = joblib.load("models/tfidf.pkl")
-        self.model = joblib.load("models/logreg.pkl")
 
     async def parse_raw_messages(self, channels, limit):
         raw = []
@@ -35,6 +38,8 @@ class Inference:
 
     def classify(self, messages):
         batch = [msg for msg in messages if (msg.get("message") or "").strip()]
+        if not batch:
+            return messages
         features = self.tfidf.transform([msg["message"] for msg in batch])
         probabilities = self.model.predict_proba(features)
         for msg, scores in zip(batch, probabilities):

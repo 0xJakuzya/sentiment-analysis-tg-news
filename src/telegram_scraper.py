@@ -3,7 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from telethon import TelegramClient
 from telethon.errors import RPCError, SessionPasswordNeededError
-from mongodb import MongoDBClient
+from .mongodb import MongoDBClient
 
 load_dotenv()
 
@@ -13,7 +13,7 @@ class TelegramScraper:
         self.api_hash = os.getenv("TELEGRAM_API_HASH")
         self.client = None
         self.mongo = mongo
-        session_path = Path(os.getenv("SESSION_DIR")) / os.getenv("SESSION_NAME")
+        session_path = Path(os.getenv("SESSION_DIR", "sessions")) / (session_name or "session")
         session_path.parent.mkdir(parents=True, exist_ok=True)
         self.session_name = str(session_path)
 
