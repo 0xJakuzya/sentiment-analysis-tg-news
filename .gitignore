@@ -1,12 +1,13 @@
-.env
 .conda
 .idea/
 .venv/
 sessions/
 *.session
 *.session-journal
+.vscode
 .env.local
 .dockerignore
 __pycache__
 data/
 /models
+.env

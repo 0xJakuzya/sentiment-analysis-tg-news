@@ -1,12 +1,12 @@
 # sentiment analysis for telegram news
 
-sentiment analysis for russian-language telegram news using telethon, TF-IDF, and logistic regression. posts and predictions are saved to mongoDB and local json files.
+Collection and semantic search for Russian-language Telegram news. The pipeline saves posts in MongoDB and local JSON files and indexes cleaned text in Qdrant.
 
 ## features
 
 - telegram channel scraping with Telethon
 - text cleaning and normalization
-- binary sentiment classification with TF-IDF and logistic regression
+- batch embedding with Sentence Transformers and similarity search in Qdrant
 - raw and processed data in MongoDB and local json
 - docker Compose support
 - json configuration (channels, pipeline, preprocessing rules)
@@ -38,6 +38,10 @@ SESSION_DIR=sessions
 MONGO_ADDRESS=mongodb://localhost:27017
 MONGO_DATABASE_NAME=telegram_sentiment
 MONGO_COLLECTION_NAME=messages
+
+# Qdrant
+QDRANT_URL=http://localhost:6333
+QDRANT_COLLECTION_NAME=news_messages
 ```
 
 ## running
@@ -45,18 +49,9 @@ MONGO_COLLECTION_NAME=messages
 ### locally
 
 ```bash
-docker compose up -d mongodb
-docker compose run --rm --build scraper
+docker compose up -d mongodb qdrant
 python main.py
 ```
-
-## model and results
-
-the classifier uses the original message as input. each processed record includes cleaned_text, the predicted sentiment (0 or 1), and confidence, the model's estimated probability for the predicted class.
-
-| Evaluation set | Records | Accuracy | Macro-F1 |
-|---|---:|---:|---:|
-| `dev.csv` | 424 | 0.9269 | 0.9206 |
 
 ## project structure
 
@@ -67,14 +62,16 @@ sentiment-analysis-tg-news
 │   ├── pipeline.json      # message limit
 │   └── preprocessing.json # text preprocessing rules
 ├── src/
-│   ├── inference.py       # scrape, clean, classify, and save
+│   ├── inference.py       # scrape, clean, and save
 │   ├── telegram_scraper.py # Telegram client
 │   ├── preprocessing.py   # text cleaning
 │   ├── mongodb.py         # MongoDB and JSON storage
+│   ├── embedder.py        # batch embedding and indexing
+│   ├── qdrantdb.py        # vector collection and queries
+│   ├── semantic_search.py # post lookup and similarity results
 │   └── utils.py           # configuration loading
-├── models/
-│   ├── tfidf.pkl          # fitted vectorizer
-│   └── logreg.pkl         # trained classifier
+├── notebooks/
+│   └── train.ipynb        # legacy sentiment experiment
 ├── data/
 │   ├── raw/               # raw data (JSON)
 │   └── processed/         # processed data (JSON)

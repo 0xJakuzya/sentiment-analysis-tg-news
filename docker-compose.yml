@@ -1,29 +1,40 @@
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:7.0
     ports:
-      - "27017:27017"
+      - "127.0.0.1:${MONGO_PORT:-27017}:27017"
     volumes:
       - mongodb_data:/data/db
+  qdrant:
+    image: qdrant/qdrant:v1.20.0
+    ports:
+      - "127.0.0.1:${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
   scraper:
     build: .
     depends_on:
       - mongodb
+      - qdrant
     environment:
       - TELEGRAM_API_ID=${TELEGRAM_API_ID}
       - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
       - SESSION_NAME=${SESSION_NAME}
-      - MONGO_ADDRESS=${MONGO_ADDRESS}
+      - MONGO_ADDRESS=${MONGO_COMPOSE_ADDRESS:-mongodb://mongodb:27017}
       - MONGO_DATABASE_NAME=${MONGO_DATABASE_NAME}
       - MONGO_COLLECTION_NAME=${MONGO_COLLECTION_NAME}
       - SESSION_DIR=sessions
+      - QDRANT_URL=${QDRANT_COMPOSE_URL:-http://qdrant:6333}
+      - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME:-news_messages}
+      - HF_HOME=/app/.cache/huggingface
     volumes:
       - ./config:/app/config
       - telegram_sessions:/app/sessions
       - ./data/raw:/app/data/raw
       - ./data/processed:/app/data/processed
+      - model_cache:/app/.cache/huggingface
 volumes:
   mongodb_data:
+  qdrant_data:
   telegram_sessions:
+  model_cache:

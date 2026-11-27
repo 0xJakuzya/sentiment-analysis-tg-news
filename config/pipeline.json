@@ -1,3 +1,5 @@
 {
-    "messages_per_channel": 50
+    "messages_per_channel": 50,
+    "embedding_model": "ai-forever/ru-en-RoSBERTa",
+    "embedding_revision": "89fb1651989adbb1cfcfdedafd7d102951ad0555"
 }

@@ -1,34 +1,44 @@
+import asyncio
 import os
+from getpass import getpass
 from pathlib import Path
+import qrcode
 from dotenv import load_dotenv
 from telethon import TelegramClient
-from telethon.errors import RPCError, SessionPasswordNeededError
-from .mongodb import MongoDBClient
+from telethon.errors import SessionPasswordNeededError
 
 load_dotenv()
 
 class TelegramScraper:
-    def __init__(self, session_name: str, mongo: MongoDBClient):
+    def __init__(self, session_name=None):
         self.api_id = os.getenv("TELEGRAM_API_ID")
         self.api_hash = os.getenv("TELEGRAM_API_HASH")
         self.client = None
-        self.mongo = mongo
         session_path = Path(os.getenv("SESSION_DIR", "sessions")) / (session_name or "session")
         session_path.parent.mkdir(parents=True, exist_ok=True)
         self.session_name = str(session_path)
 
     async def connect(self):
         self.client = TelegramClient(self.session_name, self.api_id, self.api_hash)
-        await self.client.start()
+        await self.client.connect()
         if not await self.client.is_user_authorized():
-            phone = input("Введите номер телефона: ")
-            await self.client.send_code_request(phone)
-            code = input("Введите код из Telegram: ")
-            try:
-                await self.client.sign_in(phone, code)
-            except SessionPasswordNeededError:
-                password = input("Введите пароль 2FA: ")
-                await self.client.sign_in(password=password)
+            while True:
+                qr_login = await self.client.qr_login()
+                wait_task = asyncio.create_task(qr_login.wait())
+                await asyncio.sleep(0)
+                qr = qrcode.QRCode(border=2)
+                qr.add_data(qr_login.url)
+                qr.make(fit=True)
+                qr.print_ascii(invert=True)
+                try:
+                    await wait_task
+                    break
+                except asyncio.TimeoutError:
+                    continue
+                except SessionPasswordNeededError:
+                    password = getpass("Введите пароль двухэтапной аутентификации Telegram: ")
+                    await self.client.sign_in(password=password)
+                    break
         return True
 
     async def disconnect(self):
@@ -52,6 +62,3 @@ class TelegramScraper:
                     "confidence": None
                 })
         return messages
-
-    def save_to_mongodb(self, messages):
-        return self.mongo.save_raw_messages(messages) if messages else 0

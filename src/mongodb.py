@@ -64,22 +64,31 @@ class MongoDBClient:
         self.save_local(messages, "processed")
         now = datetime.utcnow()
         for msg in messages:
-            self.collection.update_one(
-                {"id": msg["id"], "channel_id": msg["channel_id"]},
-                {
-                    "$set": {
-                        "cleaned_text": msg.get("cleaned_text"),
-                        "sentiment": msg.get("sentiment"),
-                        "confidence": msg.get("confidence"),
-                        "is_processed": True,
-                        "processed_at": now
-                    }
-                },
-                upsert=True
-            )
+            key = {"id": msg["id"], "channel_id": msg["channel_id"]}
+            fields = {
+                "cleaned_text": msg.get("cleaned_text"),
+                "sentiment": msg.get("sentiment"),
+                "confidence": msg.get("confidence"),
+                "is_processed": True,
+                "processed_at": now
+            }
+            query = {**key, "message": msg["message"]} if "message" in msg else key
+            result = self.collection.update_one(query, {"$set": fields})
+            if not result.matched_count:
+                self.collection.update_one(key, {"$setOnInsert": fields}, upsert=True)
 
     def get_messages(self):
         return list(self.collection.find({}))
+
+    def get_messages_by_keys(self, keys):
+        if not keys:
+            return {}
+        query = {"$or": [{"channel_id": channel_id, "id": message_id} for channel_id, message_id in keys]}
+        return {(msg["channel_id"], msg["id"]): msg for msg in self.collection.find(query)}
+
+    def iter_index_messages(self):
+        ids = {"$type": ["int", "long"]}
+        return self.collection.find({"id": ids, "channel_id": ids})
 
     def close(self):
         self.client.close()
