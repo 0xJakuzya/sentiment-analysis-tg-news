@@ -1,6 +1,6 @@
-# Telegram channels aggregator
+# Telegram news aggregator
 
-Collection and semantic search for Telegram channels. The pipeline saves posts in MongoDB and local JSON files and indexes cleaned text in Qdrant.
+Collection and semantic search for Telegram news channels. The pipeline saves posts in MongoDB and local JSON files and indexes cleaned text in Qdrant.
 
 ## features
 
