@@ -1,6 +1,6 @@
-# sentiment analysis for telegram news
+# Telegram channels aggregator
 
-Collection and semantic search for Russian-language Telegram news. The pipeline saves posts in MongoDB and local JSON files and indexes cleaned text in Qdrant.
+Collection and semantic search for Telegram channels. The pipeline saves posts in MongoDB and local JSON files and indexes cleaned text in Qdrant.
 
 ## features
 
